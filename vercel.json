@@ -5,14 +5,14 @@
             "src": "manage.py",
             "use": "@vercel/python",
             "config": {
-            "runtime": "python3.9"
+                "runtime": "python3.10"
             }
         }
-        ],
-        "routes": [
+    ],
+    "routes": [
         {
             "src": "/(.*)",
             "dest": "manage.py"
         }
-        ]
-    }
+    ]
+}
