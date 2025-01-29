@@ -29,11 +29,11 @@
 <a href="{% url 'unfollow' profile.user.id %}">
 <i class="fa fa-user-minus small" style="color:gray"></i>
   </a>
-           {% else %}
- <a href="{% url 'follow' profile.user.id %}">
- <i class="fa fa-user-plus small" style="color:gray"></i>
+          {% else %}
+  <a href="{% url 'follow' profile.user.id %}">
+  <i class="fa fa-user-plus small" style="color:gray"></i>
   </a>
-           {% endif %}
+          {% endif %}
 
         </h5>
         <p class="card-text"><a href="{% url 'profile' profile.user.id %}">@{{ profile.user.username|lower }}</a></p>
