@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "projeto2"
+version = "0.1.0"
+description = "projeto2"
+authors = ["Juliana Rodrigues <juliana.rodrigues-29@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+gitpython = "^3.1.44"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
