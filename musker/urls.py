@@ -19,6 +19,8 @@ urlpatterns = [
     path('delete_meep/<int:pk>', views.delete_meep, name="delete_meep"),
     path('edit_meep/<int:pk>', views.edit_meep, name="edit_meep"),
     path('search/', views.search, name='search'),
+    path('meep/<int:pk>/', views.meep_show, name='meep_show'),
+    path('meep/<int:pk>/comment/', views.add_comment, name='add_comment'),
 
 
 ]

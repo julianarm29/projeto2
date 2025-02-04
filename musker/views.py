@@ -1,11 +1,86 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Profile, Meep
-from .forms import MeepForm, SignUpForm, ProfilePicForm
+from .models import Profile, Meep, Comment
+from .forms import MeepForm, SignUpForm, ProfilePicForm, CommentForm
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django import forms
 from django.contrib.auth.models import User
+
+def add_comment(request, pk):
+    meep = get_object_or_404(Meep, id=pk)
+
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.meep = meep
+            comment.save()
+            messages.success(request, "Comment added successfully!")
+            return redirect('meep_show', pk=meep.id)
+    else:
+        form = CommentForm()
+
+    return render(request, 'add_comment.html', {'form': form, 'meep': meep})
+
+def meep_show(request, pk):
+    meep = get_object_or_404(Meep, id=pk)
+    
+    # Handle comments form submission
+    if request.method == "POST":
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.user = request.user
+            comment.meep = meep
+            comment.save()
+            messages.success(request, "Your comment has been posted!")
+            return redirect('meep_show', pk=meep.id)
+    else:
+        comment_form = CommentForm()
+
+    # Fetch all comments for this meep
+    comments = Comment.objects.filter(meep=meep).order_by("-created_at")
+
+    return render(request, "show_meep.html", {
+        'meep': meep,
+        'comments': comments,
+        'comment_form': comment_form
+    })
+
+
+def update_user(request):
+    if request.user.is_authenticated:
+        current_user = User.objects.get(id=request.user.id)
+        profile_user = Profile.objects.get(user__id=request.user.id)
+
+        # Criar uma versão do formulário onde o 'username' não pode ser alterado
+        user_form = SignUpForm(request.POST or None, request.FILES or None, instance=current_user)
+        profile_form = ProfilePicForm(request.POST or None, request.FILES or None, instance=profile_user)
+
+        # Desabilitar o campo 'username' para que ele não seja modificado
+        user_form.fields['username'].disabled = True  # Desabilita o campo 'username'
+        
+        # Remover o campo 'username' do formulário completamente
+        del user_form.fields['username']
+
+        # Verificar se os formulários são válidos
+        if user_form.is_valid() and profile_form.is_valid():
+            # Salvar as alterações feitas no formulário
+            user_form.save()  # Atualiza as informações do usuário
+            profile_form.save()  # Atualiza as informações do perfil
+
+            # Re-logar o usuário para manter a sessão atualizada
+            login(request, current_user)
+            messages.success(request, "Your Profile Has Been Updated!")
+            return redirect('home')
+
+        # Se o formulário não for válido, renderiza a página de atualização com os erros
+        return render(request, "update_user.html", {'user_form': user_form, 'profile_form': profile_form})
+    else:
+        messages.success(request, "You Must Be Logged In To View That Page...")
+        return redirect('home')
+
+
 
 def home(request):
 	if request.user.is_authenticated:
@@ -163,27 +238,6 @@ def register_user(request):
 			return redirect('home')
 	
 	return render(request, "register.html", {'form':form})
-
-
-def update_user(request):
-	if request.user.is_authenticated:
-		current_user = User.objects.get(id=request.user.id)
-		profile_user = Profile.objects.get(user__id=request.user.id)
-		# Get Forms
-		user_form = SignUpForm(request.POST or None, request.FILES or None, instance=current_user)
-		profile_form = ProfilePicForm(request.POST or None, request.FILES or None, instance=profile_user)
-		if user_form.is_valid() and profile_form.is_valid():
-			user_form.save()
-			profile_form.save()
-
-			login(request, current_user)
-			messages.success(request, ("Your Profile Has Been Updated!"))
-			return redirect('home')
-
-		return render(request, "update_user.html", {'user_form':user_form, 'profile_form':profile_form})
-	else:
-		messages.success(request, ("You Must Be Logged In To View That Page..."))
-		return redirect('home')
 	
 def meep_like(request, pk):
 	if request.user.is_authenticated:
@@ -257,8 +311,6 @@ def edit_meep(request,pk):
 	else:
 		messages.success(request, ("Please Log In To Continue..."))
 		return redirect('home')
-
-
 
 def search(request):
 	if request.method == "POST":
